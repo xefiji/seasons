@@ -1,0 +1,33 @@
+{
+  "name": "xefiji/seasons",
+  "description": "Seasons is a light and humble php framework exposing classes to ease CQRS and Event-sourcing implementation.",
+  "version": "1.0.0",
+  "type": "library",
+  "keywords": ["cqrs", "event-sourcing", "ddd"],
+  "homepage": "https://github.com/xefiji/seasons",
+  "time": "2019-09-25",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "F-Xavier Echappé",
+      "email": "fxechappe@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^7.1"
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Xefiji\\Seasons\\": ""
+    }
+  },
+  "autoload-dev": {
+    "psr-0": {
+      "Xefiji\\Seasons": "tests/"
+    }
+  },
+  "minimum-stability": "stable"
+}
