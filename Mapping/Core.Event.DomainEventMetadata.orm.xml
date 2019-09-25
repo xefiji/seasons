@@ -1,0 +1,5 @@
+<doctrine-mapping>
+    <embeddable name="Xefiji\Seasons\Event\DomainEventMetadata">
+        <field name="payload" type="text" nullable="true"/>
+    </embeddable>
+</doctrine-mapping>

@@ -1,0 +1,20 @@
+<doctrine-mapping>
+    <entity name="Xefiji\Seasons\Aggregate\EntityAggregateMapping" table="domain_entity_aggregate">
+        <id name="id" type="integer">
+            <generator strategy="AUTO"/>
+        </id>
+        <field name="entityId" type="integer"/>
+        <field name="entityClass" type="string"/>
+        <field name="aggregateId" type="string"/>
+        <field name="aggregateClass" type="string"/>
+        <field name="createdAt" type="datetime"/>
+
+        <indexes>
+            <index columns="aggregateId"/>
+            <index columns="entityId"/>
+        </indexes>
+        <unique-constraints>
+            <unique-constraint columns="aggregateId,entityId" name="aggregate_entity"/>
+        </unique-constraints>
+    </entity>
+</doctrine-mapping>

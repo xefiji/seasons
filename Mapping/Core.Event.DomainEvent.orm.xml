@@ -1,0 +1,22 @@
+<doctrine-mapping>
+    <entity name="Xefiji\Seasons\Event\DomainEvent" table="domain_event">
+        <id name="id" type="integer">
+            <generator strategy="AUTO"/>
+        </id>
+
+        <field name="aggregateId" type="string"/>
+        <field name="aggregateClass" type="string"/>
+        <field name="eventType" type="string"/>
+        <field name="createdAt" type="datetime_immutable"/>
+        <field name="auteur" type="string" nullable="true"/>
+        <field name="playhead" type="integer"/>
+        <embedded name="metadatas" class="Xefiji\Seasons\Event\DomainEventMetadata"/>
+
+        <indexes>
+            <index columns="aggregateId"/>
+        </indexes>
+        <unique-constraints>
+            <unique-constraint columns="aggregateId,aggregateClass,playhead" name="playhead"/>
+        </unique-constraints>
+    </entity>
+</doctrine-mapping>
