@@ -1,8 +1,8 @@
 # CQRS and Event sourcing lib
 
-**Light and humble php framework exposing classes to ease CQRS and Event-sourcing implementation.**
+**Light and humble ddd php framework exposing classes to ease CQRS and Event-sourcing implementation.**
 
-All of this is experimental and is part of a RD process.
+All of this is experimental and is part of a RD process on domain driven design.
 
 Lot of stuffs have been read, coded and tested, but tons still need to be tried.
 
