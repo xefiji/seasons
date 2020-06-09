@@ -32,7 +32,7 @@ interface EventStore
      * @param string $aggregateClass
      * @return EventStream
      */
-    public function getEventsFor(AggregateId $aggregateId, string $aggregateClass = null);
+    public function getEventsFor(AggregateId $aggregateId, string $aggregateClass = null): EventStream;
 
     /**
      * @param AggregateId $aggregateId
@@ -40,7 +40,15 @@ interface EventStore
      * @param string|null $aggregateClass
      * @return mixed
      */
-    public function getEventsForUntil(AggregateId $aggregateId, int $eventId, string $aggregateClass = null);
+    public function getEventsForUntil(AggregateId $aggregateId, int $eventId, string $aggregateClass = null): EventStream;
+
+    /**
+     * @param AggregateId $aggregateId
+     * @param int $playhead
+     * @param string|null $aggregateClass
+     * @return EventStream
+     */
+    public function getEventsSincePlayhead(AggregateId $aggregateId, int $playhead, string $aggregateClass = null): EventStream;
 
     /**
      * @param AggregateId $aggregateId
@@ -95,4 +103,11 @@ interface EventStore
      * @return mixed
      */
     public function queryIterator(AggregateId $aggregateId = null, $events = [], $sinceId = null, \DateTimeImmutable $sinceDate = null);
+
+    /**
+     * @param AggregateId $aggregateId
+     * @param string|null $aggregateClass
+     * @return bool
+     */
+    public function has(AggregateId $aggregateId, string $aggregateClass = null): bool;
 }

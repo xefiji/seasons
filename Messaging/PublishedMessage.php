@@ -7,7 +7,7 @@ namespace Xefiji\Seasons\Messaging;
  * Class PublishedMessage
  * @package Xefiji\Seasons\Message
  */
-final class PublishedMessage
+class PublishedMessage
 {
     /**
      * @var string
@@ -59,4 +59,31 @@ final class PublishedMessage
         return $this->trackerId;
     }
 
+    /**
+     * For APIS....
+     */
+
+    /**
+     * @return string
+     */
+    public function getTrackerId(): string
+    {
+        return $this->trackerId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMostRecentPublishedMessageId(): string
+    {
+        return $this->mostRecentPublishedMessageId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExchangeName(): string
+    {
+        return $this->exchangeName;
+    }
 }

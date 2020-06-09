@@ -10,6 +10,7 @@ use Xefiji\Seasons\Event\DomainEvent;
 use Xefiji\Seasons\Event\EventConflictException;
 use Xefiji\Seasons\Event\EventStore;
 use Xefiji\Seasons\Event\EventStream;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class DoctrineEventStore
@@ -17,6 +18,8 @@ use Xefiji\Seasons\Event\EventStream;
  */
 class DoctrineEventStore implements EventStore
 {
+    use PersistenceCapability;
+    
     /**
      * @var EntityManager
      */
@@ -96,20 +99,6 @@ class DoctrineEventStore implements EventStore
         $this->em->clear();
     }
 
-
-    /**
-     * @return void
-     */
-    private function reOpen(): void
-    {
-        if (!$this->em->isOpen()) {
-            $this->em = $this->em->create(
-                $this->em->getConnection(),
-                $this->em->getConfiguration()
-            );
-        }
-    }
-
     public function getEventsFor(AggregateId $aggregateId, string $aggregateClass = null): EventStream
     {
         $qb = $this->em->createQueryBuilder()
@@ -135,7 +124,7 @@ class DoctrineEventStore implements EventStore
      * @param string|null $aggregateClass
      * @return EventStream
      */
-    public function getEventsForUntil(AggregateId $aggregateId, int $eventId, string $aggregateClass = null)
+    public function getEventsForUntil(AggregateId $aggregateId, int $eventId, string $aggregateClass = null): EventStream
     {
         $qb = $this->em->createQueryBuilder()
             ->select('d')
@@ -156,6 +145,39 @@ class DoctrineEventStore implements EventStore
         return new EventStream($aggregateId, $qb->getQuery()->getResult());
     }
 
+
+    /**
+     * @param AggregateId $aggregateId
+     * @param int $playhead
+     * @param string|null $aggregateClass
+     * @return EventStream
+     */
+    public function getEventsSincePlayhead(AggregateId $aggregateId, int $playhead, string $aggregateClass = null): EventStream
+    {
+        $qb = $this->em->createQueryBuilder()
+            ->select('d')
+            ->from(DomainEvent::class, 'd')
+            ->where('d.aggregateId = :aggregateId')
+            ->setParameter('aggregateId', $aggregateId)
+            ->andWhere('d.playhead > :playhead')
+            ->setParameter('playhead', $playhead)
+            ->orderBy('d.id')
+            ->addOrderBy('d.createdAt')
+            ->addOrderBy('d.playhead');
+
+        if ($aggregateClass) {
+            $qb->andWhere('d.aggregateClass = :aggregateClass')
+                ->setParameter('aggregateClass', $aggregateClass);
+        }
+
+        return new EventStream($aggregateId, $qb->getQuery()->getResult());
+    }
+
+    /**
+     * @param AggregateId $aggregateId
+     * @param string|null $aggregateClass
+     * @return IterableResult
+     */
     public function iterateFor(AggregateId $aggregateId, string $aggregateClass = null): IterableResult
     {
         $qb = $this->em->createQueryBuilder()
@@ -175,10 +197,15 @@ class DoctrineEventStore implements EventStore
         return $qb->getQuery()->iterate();
     }
 
+    /**
+     * @param $eventId
+     * @return EventStream
+     * @throws DomainLogicException
+     */
     public function allEventsSince($eventId): EventStream
     {
         if (!is_int($eventId)) {
-            throw new \InvalidArgumentException("eventId should be a int");
+            throw new DomainLogicException("eventId should be a int");
         }
 
         $qb = $this->em->createQueryBuilder()
@@ -196,12 +223,13 @@ class DoctrineEventStore implements EventStore
 
     /**
      * @param $eventId
-     * @return \Doctrine\ORM\Internal\Hydration\IterableResult
+     * @return IterableResult
+     * @throws DomainLogicException
      */
     public function iterateSince($eventId): IterableResult
     {
         if (!is_int($eventId)) {
-            throw new \InvalidArgumentException("eventId should be a int");
+            throw new DomainLogicException("eventId should be a int");
         }
 
         $iterator = $this->em->createQueryBuilder()
@@ -350,5 +378,39 @@ class DoctrineEventStore implements EventStore
         }
 
         return $iterator->getQuery()->iterate();
+    }
+
+    /**
+     * @param AggregateId $aggregateId
+     * @param string|null $aggregateClass
+     * @return bool
+     */
+    public function has(AggregateId $aggregateId, string $aggregateClass = null): bool
+    {
+        $qb = $this->em->createQueryBuilder()
+            ->select('COUNT(d)')
+            ->from(DomainEvent::class, 'd')
+            ->andWhere('d.aggregateId = :aggregateId')
+            ->setParameter('aggregateId', $aggregateId->value());
+
+        if ($aggregateClass) {
+            $qb->andWhere('d.aggregateClass = :aggregateClass')
+                ->setParameter('aggregateClass', $aggregateClass);
+        }
+
+        if ($res = $qb->getQuery()->getSingleScalarResult()) {
+            return (int)$res > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return $this
+     */
+    public function clear()
+    {
+        $this->em->clear();
+        return $this;
     }
 }

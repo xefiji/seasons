@@ -4,6 +4,8 @@ namespace Xefiji\Seasons\Projection;
 
 use Xefiji\Seasons\DomainLogger;
 use Xefiji\Seasons\Event\DomainEvent;
+use Xefiji\Seasons\Event\IDomainEvent;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class DefaultProjector
@@ -65,28 +67,85 @@ class DefaultProjector implements Projector
     }
 
     /**
-     * @param DomainEvent[] $events
-     * @todo find a better way that doesn't involve this double loop
+     * @param IDomainEvent $event
+     * @throws \Exception
      */
-    public function project($events)
+    public function project($event): void
     {
-        if (!is_array($events)) {
-            $events = [$events];
-        }
-
-        array_walk($events, function (&$event) {
-            /**@var DomainEvent $event * */
-            $eventFullName = $event->getFullName();
-            if (isset($this->projections[$eventFullName])) {
-                foreach ($this->projections[$eventFullName] as $projection) {
-                    try {
-                        /**@var Projection $projection * */
-                        $projection->project($event);
-                    } catch (\Exception $e) {
-                        DomainLogger::instance()->error((sprintf("%s - %s - %s - ", __CLASS__, __FUNCTION__, $e->getMessage())), [$event]);
-                    }
+        $eventFullName = $this->getEventFullName($event);
+        if (isset($this->projections[$eventFullName])) {
+            foreach ($this->projections[$eventFullName] as $projection) {
+                try {
+                    /**@var Projection $projection * */
+                    $projection->project($event);
+                } catch (\Exception $e) {
+                    DomainLogger::instance()->error((sprintf("%s - %s - %s - ", __CLASS__, __FUNCTION__, $e->getMessage())), [$event]);
+                    throw $e; //allow fail to allow retry, in a batch processing context for example
                 }
             }
-        });
+        }
+    }
+
+    /**
+     * @param $event
+     * @return string
+     * @throws DomainLogicException
+     */
+    private function getEventFullName($event): string
+    {
+        if ($event instanceof IDomainEvent) {
+            return get_class($event);
+        }
+        if ($event instanceof DomainEvent) {
+            return $event->getFullName();
+        }
+
+        throw new DomainLogicException(sprintf("Event %s 's name cannot be resolved", get_class($event)));
+    }
+
+    /**
+     * @param null $projectionName
+     * @param null $aggregateId
+     * @throws \Exception
+     */
+    public function resetProjections($projectionName = null, $aggregateId = null): void
+    {
+        foreach ($this->getProjections() as $projection) {
+            try {
+                if ($projectionName && get_class($projection) !== $projectionName) {
+                    continue;
+                }
+
+                $this->reset($projection, $aggregateId);
+            } catch (\Exception $e) {
+                DomainLogger::instance()->error((sprintf("%s - %s - %s - ", __CLASS__, __FUNCTION__, $e->getMessage())));
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * @param Projection $projection
+     * @param null $aggregateId
+     */
+    public function reset(Projection $projection, $aggregateId = null): void
+    {
+        $projection->reset($aggregateId);
+    }
+
+    /**
+     * As uniq
+     * @return array
+     */
+    public function getProjections(): array
+    {
+        //make uniq
+        $res = [];
+        foreach ($this->projections as $event => $projections) {
+            foreach ($projections as $projection) {
+                $res[get_class($projection)] = $projection;
+            }
+        }
+        return $res;
     }
 }

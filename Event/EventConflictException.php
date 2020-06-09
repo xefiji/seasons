@@ -3,7 +3,9 @@
 namespace Xefiji\Seasons\Event;
 
 
-class EventConflictException extends \Exception
+use Xefiji\Seasons\Exception\DomainLogicException;
+
+class EventConflictException extends DomainLogicException
 {
 
 }

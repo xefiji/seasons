@@ -58,7 +58,7 @@ final class BaseCommandBus implements CommandBus
                             if ($handler->listenTo() !== get_class($command)) {
                                 continue;
                             }
-                            return $handler->handle($command);
+                            $handler->handle($command);
                         }
 
                         /*One handler, multiple commands (throug a method resolver function)*/
@@ -66,7 +66,7 @@ final class BaseCommandBus implements CommandBus
                             if (!in_array(get_class($command), $handler->listenTo())) {
                                 continue;
                             }
-                            return $handler->handle($command); //will resolve handler method name
+                            $handler->handle($command); //will resolve handler method name
                         }
                     }
                 }

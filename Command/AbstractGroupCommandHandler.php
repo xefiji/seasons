@@ -3,6 +3,7 @@
 namespace Xefiji\Seasons\Command;
 
 use Xefiji\Seasons\DomainLogger;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class AbstractGroupCommandHandler
@@ -37,7 +38,7 @@ abstract class AbstractGroupCommandHandler
             return $method;
         }
 
-        throw new \Exception("Method {$method} not implemented in " . __CLASS__);
+        throw new DomainLogicException("Method {$method} not implemented in " . __CLASS__);
     }
 
     /**

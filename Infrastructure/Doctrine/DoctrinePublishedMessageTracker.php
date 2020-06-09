@@ -14,6 +14,8 @@ use Xefiji\Seasons\Messaging\PublishedMessageTracker;
  */
 class DoctrinePublishedMessageTracker implements PublishedMessageTracker
 {
+    use PersistenceCapability;
+
     /**
      * @var EntityManager
      */
@@ -26,19 +28,6 @@ class DoctrinePublishedMessageTracker implements PublishedMessageTracker
     public function __construct(EntityManager $em)
     {
         $this->em = $em;
-    }
-
-    /**
-     * @return void
-     */
-    protected function reOpen()
-    {
-        if (!$this->em->isOpen()) {
-            $this->em = $this->em->create(
-                $this->em->getConnection(),
-                $this->em->getConfiguration()
-            );
-        }
     }
 
     /**

@@ -2,7 +2,9 @@
 namespace Xefiji\Seasons\Event;
 
 
-class ChildEventException extends \Exception
+use Xefiji\Seasons\Exception\DomainLogicException;
+
+class ChildEventException extends DomainLogicException
 {
 
 }

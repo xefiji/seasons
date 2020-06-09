@@ -3,6 +3,7 @@
 namespace Xefiji\Seasons;
 
 use Xefiji\Seasons\Event\EventConflictException;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class Retry
@@ -10,6 +11,7 @@ use Xefiji\Seasons\Event\EventConflictException;
  */
 class Retry
 {
+    const CLASS_LOG_NAME = 'retryhelper';
     const TRIES_LIMIT = 20;
     const OBJECT_MODE = 1;
     const CALLABLE_MODE = 2;
@@ -54,9 +56,9 @@ class Retry
      * @param null $callable
      * @param null $object
      * @param null $method
-     * @param array $params
-     * @param int $maxTries
-     * @param int $sleep
+     * @param $params
+     * @param $maxTries
+     * @param $sleep
      */
     private function __construct($callable = null, $object = null, $method = null, $params = [], $maxTries = 5, $sleep = 0)
     {
@@ -66,7 +68,7 @@ class Retry
         $this->params = $params;
         $this->sleep = $sleep;
         if ($maxTries > self::TRIES_LIMIT) {
-            throw new \LogicException(sprintf('Limit of %d tries cannot be exceeded', self::TRIES_LIMIT));
+            throw new DomainLogicException(sprintf('Limit of %d tries cannot be exceeded', self::TRIES_LIMIT));
         }
         $this->maxTries = $maxTries;
     }
@@ -74,12 +76,12 @@ class Retry
     /**
      * @param $object
      * @param $method
-     * @param array $params
-     * @param int $maxTries
-     * @param int $sleep
+     * @param $params
+     * @param $maxTries
+     * @param $sleep
      * @return Retry
      */
-    public static function forObject($object, $method, $params = [], $maxTries = 5, $sleep = 0)
+    public static function obj($object, $method, $params = [], $maxTries = 5, $sleep = 0)
     {
         $self = new self($object, $method, $params, $maxTries, $sleep);
         $self->mode = self::OBJECT_MODE;
@@ -88,11 +90,11 @@ class Retry
 
     /**
      * @param callable $function
-     * @param int $maxTries
-     * @param int $sleep
+     * @param $maxTries
+     * @param $sleep
      * @return Retry
      */
-    public static function for (callable $function, $maxTries = 5, $sleep = 0)
+    public static function func(callable $function, $maxTries = 5, $sleep = 0)
     {
         $self = new self($function, null, null, [], $maxTries, $sleep);
         $self->mode = self::CALLABLE_MODE;
@@ -103,6 +105,7 @@ class Retry
     /**
      * @return mixed
      * @throws MaxTriesReachedException
+     * @throws \Exception
      */
     public function run()
     {
@@ -122,13 +125,16 @@ class Retry
                         return $action();
                         break;
                     default:
-                        throw new \LogicException("No mode specified");
+                        throw new DomainLogicException("No mode specified");
                 }
 
-            } catch (\Exception $e) {
+            } catch (EventConflictException $e) {
                 $triesCount++;
-                DomainLogger::instance()->error("Retry {$triesCount}/{$this->maxTries}", [$e->getMessage()]);
+                DomainLogger::instance()->error(sprintf("[%s] %s - retry %s/%s: %s", self::CLASS_LOG_NAME, __FUNCTION__, (string)$triesCount, (string)$this->maxTries, $e->getMessage()));
                 sleep($this->sleep);
+            } catch (\Exception $e) {
+                DomainLogger::instance()->error(sprintf("[%s] %s - %s", self::CLASS_LOG_NAME, __FUNCTION__, $e->getMessage()));
+                throw $e;
             }
         }
 

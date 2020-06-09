@@ -13,7 +13,7 @@ namespace Xefiji\Seasons\Command;
  * "The relation between Command and Command Handler is 1:1.
  * A Command has only one Command Handler and vice versa."
  */
-interface Command
+interface Command extends \Serializable
 {
 
 }

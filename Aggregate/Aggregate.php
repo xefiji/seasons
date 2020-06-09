@@ -9,6 +9,7 @@ use Xefiji\Seasons\Event\DomainEventPublisher;
 use Xefiji\Seasons\Event\EventStream;
 use Xefiji\Seasons\Event\IDomainEvent;
 use Xefiji\Seasons\Exception\MissingApplierMethodException;
+use Xefiji\Seasons\Snapshot\DomainSnapshotPublisher;
 
 /**
  * Class Aggregate (Root)
@@ -17,6 +18,7 @@ use Xefiji\Seasons\Exception\MissingApplierMethodException;
 abstract class Aggregate implements AggregateInterface
 {
     const RAW_CREATION_METHOD_NAME = 'create';
+    const SNAPSHOT_THRESHOLD = 30; //can be overriden in child classes: snapshotThreshold()
 
     /**
      * @var array
@@ -29,6 +31,16 @@ abstract class Aggregate implements AggregateInterface
     private $playhead = DomainEvent::DEFAULT_PLAYHEAD; //concurrency
 
     /**
+     * @var null
+     */
+    private $snapShotVersion = null;
+
+    /**
+     * @var null
+     */
+    private $footPrint = null;
+
+    /**
      * @param DomainEvent $event
      * @return void
      */
@@ -37,6 +49,7 @@ abstract class Aggregate implements AggregateInterface
         $this->record($event);
         $this->apply($event);
         $this->publish($event);
+        $this->snapshot();
     }
 
     /**
@@ -106,6 +119,30 @@ abstract class Aggregate implements AggregateInterface
     }
 
     /**
+     * @param bool $force
+     */
+    public function snapshot($force = false)
+    {
+        if (!$force) {
+
+            if ((int)$this->playhead === 0) {
+                return;
+            }
+
+            if (is_null($this->snapshotThreshold())) {
+                return;
+            }
+
+            if ((int)$this->playhead % (int)$this->snapshotThreshold() !== 0) {
+                return;
+            }
+
+        }
+
+        DomainSnapshotPublisher::instance()->snapshot($this);
+    }
+
+    /**
      * @return array
      */
     public function recorded()
@@ -154,11 +191,12 @@ abstract class Aggregate implements AggregateInterface
 
     /**
      * @param EventStream $history
+     * @param null $aggregate
      * @return Aggregate
      */
-    public static function reconstitute(EventStream $history)
+    public static function reconstitute(EventStream $history, $aggregate = null)
     {
-        $aggregate = forward_static_call([get_called_class(), self::RAW_CREATION_METHOD_NAME], $history->aggregateId());
+        $aggregate = $aggregate ?? forward_static_call([get_called_class(), self::RAW_CREATION_METHOD_NAME], $history->aggregateId());
         foreach ($history as $event) {
             $aggregate->apply($event);
         }
@@ -172,6 +210,69 @@ abstract class Aggregate implements AggregateInterface
     public function toArray()
     {
         return [];
+    }
+
+    /**
+     * Override this with custom value in child class if needed.
+     * If null: no snapshot.
+     * @return int|null
+     */
+    protected function snapshotThreshold()
+    {
+        $class = get_called_class();
+        return $class::SNAPSHOT_THRESHOLD;
+    }
+
+    /**
+     * @param $version
+     * @return $this
+     */
+    public function setSnapshotVersion($version)
+    {
+        $this->snapShotVersion = $version;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSnapshotVersion()
+    {
+        return $this->snapShotVersion;
+    }
+
+    /**
+     * @return null
+     */
+    public function getFootPrint()
+    {
+        return $this->footPrint;
+    }
+
+    /**
+     * Warning: if you use memory_get_usage to detect and compute footprint,
+     * in a docker container context it can lead to some hazardous result.
+     *
+     * @param null $footPrint
+     * @param bool $convert
+     */
+    public function setFootPrint($footPrint, $convert = true)
+    {
+        $this->footPrint = $convert ? self::convertMem($footPrint) : $footPrint;
+    }
+
+    /**
+     * @param $size
+     * @return string
+     */
+    public static function convertMem($size)
+    {
+        if ($size === 0) {
+            return $size;
+        }
+
+        $unit = array('b', 'kb', 'mb', 'gb', 'tb', 'pb');
+        return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . $unit[$i];
     }
 
 }

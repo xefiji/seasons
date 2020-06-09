@@ -2,8 +2,6 @@
 
 namespace Xefiji\Seasons\Projection;
 
-use Xefiji\Seasons\Event\DomainEvent;
-
 /**
  * Interface Projection
  * @package Xefiji\Seasons\Projection
@@ -16,8 +14,14 @@ interface Projection
     public function listenTo();
 
     /**
-     * @param DomainEvent $event
-     * @return mixed
+     * @param $event
+     * @return mixed|void
      */
-    public function project(DomainEvent $event);
+    public function project($event): void;
+
+    /**
+     * @param null $aggregateId
+     * @return void
+     */
+    public function reset($aggregateId = null): void;
 }

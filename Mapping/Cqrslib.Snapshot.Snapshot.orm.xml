@@ -1,0 +1,20 @@
+<doctrine-mapping>
+    <entity name="Xefiji\Seasons\Snapshot\Snapshot" table="domain_snapshot">
+        <id name="id" type="integer">
+            <generator strategy="AUTO"/>
+        </id>
+
+        <field name="aggregateId" type="string"/>
+        <field name="aggregateClass" type="string"/>
+        <field name="aggregate" type="text"/>
+        <field name="createdAt" type="datetime_immutable"/>
+        <field name="version" type="integer"/>
+
+        <indexes>
+            <index columns="aggregateId"/>
+        </indexes>
+        <unique-constraints>
+            <unique-constraint columns="aggregateId,aggregateClass,version" name="playhead"/>
+        </unique-constraints>
+    </entity>
+</doctrine-mapping>

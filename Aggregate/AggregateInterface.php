@@ -24,5 +24,7 @@ interface AggregateInterface
 
     public function clearEvents();
 
+    public function playhead();
+
     static function create(AggregateId $aggregateId = null);
 }

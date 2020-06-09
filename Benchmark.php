@@ -1,6 +1,7 @@
 <?php
 
 namespace Xefiji\Seasons;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class Benchmark
@@ -37,7 +38,7 @@ class Benchmark
     public function end()
     {
         if (is_null($this->start)) {
-            throw new \LogicException("Start should not be null");
+            throw new DomainLogicException("Start should not be null");
         }
 
         list($usec, $sec) = explode(' ', microtime());
@@ -58,7 +59,7 @@ class Benchmark
     public function toMinutes()
     {
         if (is_null($this->end)) {
-            throw new \LogicException("End should not be null");
+            throw new DomainLogicException("End should not be null");
         }
 
         $cents = round($this->end / 60, 2);

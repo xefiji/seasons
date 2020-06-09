@@ -1,6 +1,7 @@
 <?php
 
 namespace Xefiji\Seasons\Aggregate;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class AggregateId
@@ -67,15 +68,16 @@ abstract class AggregateId
 
     /**
      * @param $string
-     * @param bool $strict must pass a string and not an AggregateId instance
-     * @return AggregateId
+     * @param bool $strict
+     * @return mixed
+     * @throws DomainLogicException
      */
     public static function fromString($string, $strict = false)
     {
         $class = get_called_class();
 
         if ($strict && $string instanceof $class) { //don't allow switch
-            throw new \LogicException("Param is already an instance of " . get_class($string));
+            throw new DomainLogicException("Param is already an instance of " . get_class($string));
         }
 
         if ($string instanceof $class) { //allow switch

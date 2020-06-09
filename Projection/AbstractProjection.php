@@ -8,6 +8,8 @@ use Xefiji\Seasons\Aggregate\EntityAggregateMapping;
 use Xefiji\Seasons\DomainLogger;
 use Xefiji\Seasons\Event\ChildEventException;
 use Xefiji\Seasons\Event\DomainEvent;
+use Xefiji\Seasons\Event\IDomainEvent;
+use Xefiji\Seasons\Exception\DomainLogicException;
 use Xefiji\Seasons\Messaging\PublishedMessageTracker;
 
 /**
@@ -45,16 +47,8 @@ abstract class AbstractProjection
     abstract public function getTrackerName():string;
 
     /**
-     * @param $aggregateId
-     * @return EntityAggregateMapping
-     * @deprecated
-     */
-    abstract public function getMap($aggregateId):EntityAggregateMapping;
-
-    /**
      * @param array $params
      * @return bool
-     * @internal param $aggregateId
      */
     abstract public function exists(...$params):bool;
 
@@ -71,22 +65,39 @@ abstract class AbstractProjection
     abstract public function getRows(...$params):array;
 
     /**
-     * @param DomainEvent $event
+     * @param $event
      * @throws ChildEventException
      */
-    public function project(DomainEvent $event):void
+    public function project($event): void
     {
-        $method = self::METHOD_PREFIX . str_ireplace(self::METHOD_SUFFIX, "", $event->getEventType());
-        $childEvent = $event->getPayload();
-        if (!$childEvent) {
-            throw new ChildEventException("ChildEvent {$event->getFullName()} could not be built in " . get_class($this));
-        }
+        switch (true) {
+            //@deprecated: or might be used only on bulk projections commands ?
+            case $event instanceof DomainEvent:
+                $method = self::METHOD_PREFIX . str_ireplace(self::METHOD_SUFFIX, "", $event->getEventType());
+                $childEvent = $event->getPayload();
+                if (!$childEvent) {
+                    throw new ChildEventException("ChildEvent {$event->getFullName()} could not be built in " . get_class($this));
+                }
 
-        if (method_exists($this, $method)) {
-            call_user_func([$this, $method], $childEvent);
-            $this->track($event);
-        } else {
-            DomainLogger::instance()->warning(sprintf("method %s does not exist in %s", $method, get_class($this)));
+                if (method_exists($this, $method)) {
+                    call_user_func([$this, $method], $childEvent);
+                    $this->track($event->getId());
+                } else {
+                    DomainLogger::instance()->warning(sprintf("method %s does not exist in %s", $method, get_class($this)));
+                }
+                break;
+
+            case $event instanceof IDomainEvent:
+                $method = self::METHOD_PREFIX . str_ireplace(self::METHOD_SUFFIX, "", DomainEvent::getClassName($event));
+                if (method_exists($this, $method)) {
+                    call_user_func([$this, $method], $event);
+                    if (property_exists($event, IDomainEvent::ID)) {
+                        $this->track($event->{IDomainEvent::ID});
+                    }
+                } else {
+                    DomainLogger::instance()->warning(sprintf("method %s does not exist in %s", $method, get_class($this)));
+                }
+                break;
         }
     }
 
@@ -104,21 +115,32 @@ abstract class AbstractProjection
     }
 
     /**
-     * @param DomainEvent $event
+     * @param int $id
+     * @throws DomainLogicException
      */
-    private function track(DomainEvent $event):void
+    private function track(int $id):void
     {
         if (null == ($trackerString = $this->getTrackerName())) {
             return;
         }
 
         if (!($this->tracker instanceof PublishedMessageTracker)) {
-            throw new \LogicException(sprintf("Tracker %s must be of type %s", $trackerString, get_class($this->tracker)));
+            throw new DomainLogicException(sprintf("Tracker %s must be of type %s", $trackerString, get_class($this->tracker)));
         }
 
-        if ($this->mostRecentTrackedId < $event->getId()) {
-            $this->tracker->trackMostRecentPublishedMessage($trackerString, $event->getId());
-            $this->mostRecentTrackedId = $event->getId();
+        if ($this->mostRecentTrackedId < $id) {
+            $this->tracker->trackMostRecentPublishedMessage($trackerString, $id);
+            $this->mostRecentTrackedId = $id;
         }
     }
+
+    /**
+     * @param null $aggregateId
+     * @return void
+     */
+    public function reset($aggregateId = null): void
+    {
+        //override
+    }
+
 }

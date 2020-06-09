@@ -7,7 +7,7 @@ use Xefiji\Seasons\Aggregate\AggregateId;
  * Class AggregateNotFoundException
  * @package Xefiji\Seasons\Exception
  */
-class AggregateNotFoundException extends \Exception
+class AggregateNotFoundException extends DomainLogicException 
 {
     /** @var string */
     protected $message = "Aggregate was not found";

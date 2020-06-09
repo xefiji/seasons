@@ -27,6 +27,24 @@ class Match
      * @param array ...$fields
      * @return bool
      */
+    static function timeObjects(...$fields): bool
+    {
+        foreach ($fields as $field) {
+            if (!($field instanceof \DateTime) && !($field instanceof \DateTimeImmutable)) {
+                return false;
+            }
+
+            if ($field->format(Date::FORMAT_US) !== '1970-01-01') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param array ...$fields
+     * @return bool
+     */
     static function serializedDate(...$fields): bool
     {
         foreach ($fields as $field) {
@@ -73,6 +91,20 @@ class Match
     {
         foreach ($fields as $field) {
             if (!($field instanceof IValueObject) && !method_exists($field, 'equals')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param array ...$fields
+     * @return bool
+     */
+    static function entity(...$fields): bool
+    {
+        foreach ($fields as $field) {
+            if (!method_exists($field, "getId")) {
                 return false;
             }
         }
@@ -263,9 +295,19 @@ class Match
                     return true;
                 }
                 break;
+            case self::entity($previous):
+                if (!$current->getId() == $previous->getId()) {
+                    return true;
+                }
+                break;
             case self::varchars($previous):
             case self::bools($previous):
                 if (self::differs($previous, $current)) {
+                    return true;
+                }
+                break;
+            case self::timeObjects($previous):
+                if (Date::differs($previous->format('H:i'), $current->format('H:i'))) {
                     return true;
                 }
                 break;
