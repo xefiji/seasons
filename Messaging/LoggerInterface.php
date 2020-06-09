@@ -6,6 +6,7 @@ namespace Xefiji\Seasons\Messaging;
 /**
  * Interface LoggerInterface
  * @package Xefiji\Seasons\Message
+ * @deprecated
  */
 interface LoggerInterface
 {

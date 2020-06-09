@@ -3,6 +3,7 @@
 namespace Xefiji\Seasons\Projection;
 
 use Xefiji\Seasons\Event\DomainEvent;
+use Xefiji\Seasons\Event\IDomainEvent;
 
 /**
  * Interface Projector
@@ -21,9 +22,9 @@ interface Projector
     public function unregister($projections);
 
     /**
-     * @param DomainEvent[] $events
+     * @param $event
      */
-    public function project($events);
+    public function project($event): void;
 
     /**
      * @param Projection $projection

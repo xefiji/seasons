@@ -6,7 +6,7 @@ namespace Xefiji\Seasons\Exception;
  * Class MissingApplierMethodException
  * @package Xefiji\Seasons\Exception
  */
-class MissingApplierMethodException extends \Exception
+class MissingApplierMethodException extends DomainLogicException
 {
 
 }

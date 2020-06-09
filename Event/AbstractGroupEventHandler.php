@@ -3,17 +3,18 @@
 namespace Xefiji\Seasons\Event;
 
 
+use Xefiji\Seasons\Exception\DomainLogicException;
+
 abstract class AbstractGroupEventHandler
 {
     /**
      * @param DomainEvent $event
      * @return mixed|null
-     * @todo is it still working ?
      */
     public function handle(DomainEvent $event)
     {
         if ($method = $this->resolveHandlerMethod($event)) {
-            return call_user_func([$this, $method], $event->fromGlobalEventObject());
+            return call_user_func([$this, $method], $event->getPayload());
         }
         return null;
     }
@@ -32,6 +33,6 @@ abstract class AbstractGroupEventHandler
             return $method;
         }
 
-        throw new \Exception("Method {$method} not implemented in " . __CLASS__);
+        throw new DomainLogicException("Method {$method} not implemented in " . __CLASS__);
     }
 }

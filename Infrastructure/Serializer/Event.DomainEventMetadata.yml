@@ -1,0 +1,5 @@
+Xefiji\Seasons\Event\DomainEventMetadata:
+   exclusion_policy: NONE
+   properties:
+      payload:
+          type: string

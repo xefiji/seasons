@@ -9,7 +9,6 @@ use Psr\Log\LoggerInterface;
  * @package Xefiji\Seasons
  * Singleton to allow multiple Logger tools as Monolog
  * Default: Syslog, the native PHP Logger
- * @todo add else ? But isn't it useful to let it fail if no logger ?
  */
 class DomainLogger implements LoggerInterface
 {
@@ -61,9 +60,25 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_ERR, $message);
+        } else {
+            $this->logger->error($message, $context);
         }
+    }
 
-        $this->logger->error($message, $context);
+    /**
+     * Just a wrapper to automate error messages formatting
+     * @param $fqcn
+     * @param $function
+     * @param $message
+     * @param array $context
+     */
+    public function errorf($message, $fqcn, $function, array $context = array())
+    {
+        $parts = explode("\\", $fqcn);
+        $class = array_pop($parts);
+        $className = strtolower($class);
+        $string = sprintf("[%s] %s - %s", $className, $function, $message);
+        $this->error($string, $context);
     }
 
     /**
@@ -77,9 +92,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_INFO, $message);
+        } else {
+            $this->logger->info($message, $context);
         }
-
-        $this->logger->info($message, $context);
     }
 
     /**
@@ -94,9 +109,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_EMERG, $message);
+        } else {
+            $this->logger->emergency($message, $context);
         }
-
-        $this->logger->emergency($message, $context);
     }
 
     /**
@@ -114,9 +129,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_ALERT, $message);
+        } else {
+            $this->logger->alert($message, $context);
         }
-
-        $this->logger->alert($message, $context);
     }
 
     /**
@@ -133,9 +148,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_CRIT, $message);
+        } else {
+            $this->logger->critical($message, $context);
         }
-
-        $this->logger->critical($message, $context);
     }
 
     /**
@@ -153,9 +168,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_WARNING, $message);
+        } else {
+            $this->logger->warning($message, $context);
         }
-
-        $this->logger->warning($message, $context);
     }
 
     /**
@@ -170,9 +185,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_NOTICE, $message);
+        } else {
+            $this->logger->notice($message, $context);
         }
-
-        $this->logger->notice($message, $context);
     }
 
     /**
@@ -187,9 +202,9 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog(LOG_DEBUG, $message);
+        } else {
+            $this->logger->debug($message, $context);
         }
-
-        $this->logger->debug($message, $context);
     }
 
     /**
@@ -205,9 +220,24 @@ class DomainLogger implements LoggerInterface
     {
         if (is_null($this->logger)) {
             syslog($level, $message);
+        } else {
+            $this->logger->log($level, $message, $context);
         }
+    }
 
-        $this->logger->log($level, $message, $context);
+    /**
+     * @throws \Exception
+     */
+    public function __clone()
+    {
+        throw new \Exception("Why would you clone a singleton ?");
+    }
 
+    /**
+     * @throws \Exception
+     */
+    private function __wakeup()
+    {
+        throw new \Exception("Why would you unserialize a singleton ?");
     }
 }

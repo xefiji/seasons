@@ -87,8 +87,19 @@ class DomainEventPublisher
     }
 
 
+    /**
+     * @throws \Exception
+     */
     public function __clone()
     {
-        throw new \BadMethodCallException("Why would you clone a singleton ?");
+        throw new \Exception("Why would you clone a singleton ?");
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function __wakeup()
+    {
+        throw new \Exception("Why would you unserialize a singleton ?");
     }
 }

@@ -59,15 +59,22 @@ class SerializeSubscriber implements EventSubscriberInterface
      */
     public function onPostSerialize(ObjectEvent $event)
     {
+        $versionThreshold = 2.0; //version number from which we can start switching from first to 2nd method.
+        if (defined('JMS_SERIALIZER_VERSION')) {
+            if (JMS_SERIALIZER_VERSION < $versionThreshold) {
+                // <=  1.x
+                $event->getVisitor()->addData(
+                    '_class', get_class($event->getObject())
+                );
+                return;
+            }
+        }
+
         // > 1.x
         $event->getVisitor()->visitProperty(
             new StaticPropertyMetadata('', '_class', null), get_class($event->getObject())
         );
 
-//        // <=  1.x
-//        $event->getVisitor()->addData(
-//            '_class', get_class($event->getObject())
-//        );
     }
 
     public function onPreDeSerialize(PreDeserializeEvent $event)

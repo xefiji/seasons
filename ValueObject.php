@@ -4,13 +4,16 @@ namespace Xefiji\Seasons;
 
 /**
  * Class ValueObject
- * @todo compare on fields in childs, and guard with validation
  * @package Xefiji\Seasons
+ * @todo compare on fields in childs, and guard with validation
  */
 abstract class ValueObject
 {
     const SEP = ' ';
 
+    /**
+     * @var string
+     */
     protected $value;
 
     public function __construct()

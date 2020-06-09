@@ -3,7 +3,7 @@
 namespace Xefiji\Seasons\Infrastructure\Doctrine;
 
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Class ReadModelRepository
@@ -11,13 +11,15 @@ use Doctrine\ORM\EntityManager;
  */
 class ReadModelRepository
 {
+    use PersistenceCapability;
+
     /**
      * ReadModelRepository constructor.
-     * @param EntityManager $entityManager
+     * @param EntityManagerInterface $em
      */
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManagerInterface $em)
     {
-        $this->entityManager = $entityManager;
+        $this->em = $em; //@todo fix this visibility problem.
     }
 
     /**
@@ -27,9 +29,9 @@ class ReadModelRepository
     public function save($entity)
     {
         $this->reOpen();
-        $this->entityManager->persist($entity);
-        $this->entityManager->flush();
-        $this->entityManager->clear();
+        $this->em->persist($entity);
+        $this->em->flush();
+        $this->em->clear();
     }
 
     /**
@@ -39,22 +41,8 @@ class ReadModelRepository
     public function remove($entity)
     {
         $this->reOpen();
-        $this->entityManager->remove($entity);
-        $this->entityManager->flush();
-        $this->entityManager->clear();
+        $this->em->remove($entity);
+        $this->em->flush();
+        $this->em->clear();
     }
-
-    /**
-     * @return void
-     */
-    protected function reOpen()
-    {
-        if (!$this->entityManager->isOpen()) {
-            $this->entityManager = $this->entityManager->create(
-                $this->entityManager->getConnection(),
-                $this->entityManager->getConfiguration()
-            );
-        }
-    }
-
 }

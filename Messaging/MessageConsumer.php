@@ -10,7 +10,7 @@ interface MessageConsumer
 {
     public function open($exchangeName);
 
-    public function receive($exchangeName, $routingKey = null);
+    public function receive($exchangeName, $ttl = null, $routingKey = null);
 
     public function close($exchangeName);
 

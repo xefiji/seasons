@@ -1,0 +1,20 @@
+Xefiji\Seasons\Event\DomainEvent:
+   exclusion_policy: NONE
+   properties:
+      id:
+          type: int
+      aggregateId:
+          type: string
+      aggregateClass:
+          type: string
+      eventType:
+          type: string
+      createdAt:
+          type: DateTimeImmutable # important because in php7 it's already a dt immutable on db side; so be consistent here
+      auteur:
+          type: string
+      playhead:
+          type: int
+      metadatas:
+          type: Xefiji\Seasons\Event\DomainEventMetadata
+

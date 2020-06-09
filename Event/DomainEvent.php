@@ -22,8 +22,7 @@ use Xefiji\Seasons\Serializer\DomainSerializer;
 class DomainEvent
 {
     const DEFAULT_PLAYHEAD = -1;
-    const NEW_VERSION_METHOD_NAME = "setNewVersion";
-    const GLOBAL_TO_CHILD_METHOD = "fromGlobalDomainEvent";
+    const PUBLISH_NAME = "events";
 
     /**
      * @var string
@@ -64,12 +63,6 @@ class DomainEvent
      * @var DomainEventMetadata
      */
     protected $metadatas;
-
-    /**
-     * @var
-     */
-    protected $version = 0;
-
 
     /**
      * DomainEvent constructor.
@@ -207,72 +200,6 @@ class DomainEvent
     }
 
     /**
-     * @param Aggregate $aggregate
-     * @param null $metadatas
-     * @param int $playhead
-     * @param null $createdAt
-     * @param null $auteur
-     * @return DomainEvent
-     * @todo possibly automatically, when metadatas is array, map var and key
-     * @deprecated
-     */
-    public static function fromAggregate(Aggregate $aggregate, $metadatas = null, $createdAt = null, $auteur = null, $playhead = self::DEFAULT_PLAYHEAD)
-    {
-        $serializer = DomainSerializer::instance();
-        $metadatas = !is_null($metadatas) ? new DomainEventMetadata($serializer->serialize($metadatas)) : new DomainEventMetadata($serializer->serialize($aggregate));
-        $event = new self($aggregate->id(), get_class($aggregate), $metadatas, $auteur, $playhead);
-        $event->eventType = self::getClassName(get_called_class());
-        $event->createdAt = is_null($createdAt) ? new \DateTimeImmutable() : ($createdAt instanceof \DateTimeImmutable ? $createdAt : new \DateTimeImmutable($createdAt));
-        if (method_exists(get_called_class(), self::NEW_VERSION_METHOD_NAME)) {
-            $event->version = forward_static_call([get_called_class(), self::NEW_VERSION_METHOD_NAME]);
-        }
-
-        return $event;
-    }
-
-    /**
-     * Casts a global domain event (coming from event store) to a Child one
-     * @param DomainEvent $event
-     * @return DomainEvent
-     * Important: static call
-     * @deprecated
-     */
-    public static function fromGlobalDomainEvent(DomainEvent $event)
-    {
-        $childCalledClass = get_called_class();
-        $childEvent = new $childCalledClass($event->getAggregateId(), $event->getAggregateClass(), $event->getMetadatas(), $event->getAuteur(), $event->getPlayHead());
-        $childEvent->eventType = $event->getEventType();
-        $childEvent->id = $event->getId();
-        $childEvent->createdAt = $event->getCreatedAt();
-        $childEvent->version = $event->getVersion();
-
-        return $childEvent;
-    }
-
-    /**
-     * Same as \Xefiji\Seasons\Event\DomainEvent::fromGlobalDomainEvent but in an object context: $this->fromGlobalEventObject()
-     * @return DomainEvent
-     * Important: object call
-     * @deprecated
-     */
-    public function fromGlobalEventObject()
-    {
-        return call_user_func([$this->getFullName(), "fromGlobalDomainEvent"], $this);
-    }
-
-    /**
-     * @param DomainEvent $event
-     * @return mixed|null
-     * @deprecated
-     */
-    public static function domainToChildEvent(DomainEvent $event)
-    {
-        /**@var IDomainEvent $child * */
-        $child = $event->getPayload();
-        return $child;
-    }
-
-    /**
      * @param bool $normalize will return a deserialized, reconstructed and normalized object based on _class property
      * instead of a pure json payload
      * @todo avoid putting VOs in events: https://buildplease.com/pages/vos-in-events/
@@ -295,14 +222,6 @@ class DomainEvent
     {
         $payload = $this->getPayload(false);
         return $payload->_class;
-    }
-
-    /**
-     * @return int
-     */
-    public function getVersion()
-    {
-        return $this->version;
     }
 
     /**

@@ -3,7 +3,9 @@
 namespace Xefiji\Seasons;
 
 
-class MaxTriesReachedException extends \Exception
+use Xefiji\Seasons\Exception\DomainLogicException;
+
+class MaxTriesReachedException extends DomainLogicException
 {
 
 }

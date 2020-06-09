@@ -3,6 +3,7 @@
 namespace Xefiji\Seasons\Serializer;
 
 use Xefiji\Seasons\DomainLogger;
+use Xefiji\Seasons\Exception\DomainLogicException;
 use Xefiji\Seasons\Exception\MissingClassInEvent;
 use JMS\Serializer\Serializer;
 
@@ -56,7 +57,7 @@ class DomainSerializer
      * @param $data
      * @return string
      */
-    private function defaultSerialise($data)
+    public function defaultSerialise($data)
     {
         return base64_encode(serialize($data));
     }
@@ -65,7 +66,7 @@ class DomainSerializer
      * @param $data
      * @return mixed
      */
-    private function defaultDeserialise($data)
+    public function defaultDeserialise($data)
     {
         return unserialize(base64_decode($data));
     }
@@ -104,7 +105,7 @@ class DomainSerializer
                         }
                         break;
                     default:
-                        throw new \Exception("No other serialization format plugged");
+                        throw new DomainLogicException("No other serialization format plugged");
                 }
             }
         } catch (MissingClassInEvent $e) {
@@ -122,5 +123,21 @@ class DomainSerializer
     public function setSerializer($serializer)
     {
         $this->serializer = $serializer;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function __clone()
+    {
+        throw new \Exception("Why would you clone a singleton ?");
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function __wakeup()
+    {
+        throw new \Exception("Why would you unserialize a singleton ?");
     }
 }

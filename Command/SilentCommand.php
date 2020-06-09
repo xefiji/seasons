@@ -7,7 +7,7 @@ namespace Xefiji\Seasons\Command;
  * Interface SilentCommand
  * @package Xefiji\Seasons\Command
  */
-interface SilentCommand
+interface SilentCommand extends \Serializable
 {
 
 }

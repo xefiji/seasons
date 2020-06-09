@@ -1,6 +1,7 @@
 <?php
 
 namespace Xefiji\Seasons\Query;
+use Xefiji\Seasons\Exception\DomainLogicException;
 
 /**
  * Class AbstractGroupQueryHandler
@@ -34,6 +35,6 @@ abstract class AbstractGroupQueryHandler
             return $method;
         }
 
-        throw new \Exception("Method {$method} not implemented in " . __CLASS__);
+        throw new DomainLogicException("Method {$method} not implemented in " . __CLASS__);
     }
 }

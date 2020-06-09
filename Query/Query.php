@@ -7,6 +7,6 @@ namespace Xefiji\Seasons\Query;
  * Interface Query
  * @package Xefiji\Seasons\Query
  */
-interface Query
+interface Query extends \Serializable
 {
 }

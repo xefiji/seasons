@@ -3,7 +3,7 @@
 namespace Xefiji\Seasons\Event;
 
 
-final class DomainEventMetadata
+class DomainEventMetadata
 {
     /**
      * @var string

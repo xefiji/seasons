@@ -37,7 +37,8 @@ interface MessageProducer
     /**
      * Depending on the transport choosen by the app, the notif must or not be serialized.
      * Do this below
+     * @param $notif
      * @return mixed
      */
-    public function serialize(): string;
+    public function serialize($notif): string;
 }

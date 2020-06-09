@@ -41,17 +41,18 @@ class BaseEventBus implements EventBus
 
             try {
                 while ($event = array_shift($this->queue)) {
+                    $eventFullName = $event->getFullName(); //gets event's payload's IDimainEvent, and its _class property
                     foreach ($this->eventHandlers as $eventHandler) {
 
                         if ($eventHandler instanceof EventHandler) {
-                            if ($eventHandler->listenTo() !== $event->getFullName()) {
+                            if ($eventHandler->listenTo() !== $eventFullName) {
                                 continue;
                             }
                             $eventHandler->handle($event);
                         }
 
                         if ($eventHandler instanceof GroupEventHandler) {
-                            if (!in_array($event->getFullName(), $eventHandler->listenTo())) {
+                            if (!in_array($eventFullName, $eventHandler->listenTo())) {
                                 continue;
                             }
                             $eventHandler->handle($event);

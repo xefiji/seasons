@@ -4,6 +4,7 @@ namespace Xefiji\Seasons\Messaging;
 
 use Xefiji\Seasons\Aggregate\AggregateId;
 use Xefiji\Seasons\DomainLogger;
+use Xefiji\Seasons\Exception\DomainLogicException;
 use Xefiji\Seasons\Helper\Date;
 use Xefiji\Seasons\Event\DomainEvent;
 use Xefiji\Seasons\Event\EventStore;
@@ -51,11 +52,12 @@ class NotificationService
 
     /**
      * @param $exchangeName
+     * @param null $ttl
      */
-    public function subscribe($exchangeName)
+    public function subscribe($exchangeName, $ttl = null)
     {
         $this->messageConsumer->open($exchangeName);
-        $this->messageConsumer->receive($exchangeName);
+        $this->messageConsumer->receive($exchangeName, $ttl);
     }
 
     public function publishFor(AggregateId $aggregateId, $exchangeName)
@@ -83,9 +85,10 @@ class NotificationService
 
     /**
      * @param $exchangeName
+     * @param bool $track
      * @return int
      */
-    public function publishNotifs($exchangeName)
+    public function publishNotifs($exchangeName, $track = true)
     {
         $mostRecentPublishedMessageId = $this->publishedMessageTracker->mostRecentPublishedMessageId($exchangeName);
         if (is_null($mostRecentPublishedMessageId)) {
@@ -93,7 +96,7 @@ class NotificationService
             return 0;
         }
 
-        $notifs = $this->listUnpublished($mostRecentPublishedMessageId);
+        $notifs = $this->listUnpublished($mostRecentPublishedMessageId, $exchangeName);
         if (!$notifs || $notifs->count() === 0) {
             return 0;
         }
@@ -113,18 +116,29 @@ class NotificationService
             $this->messageProducer->close($exchangeName);
         }
 
-        $id = $lastPublishedNotifications ? $lastPublishedNotifications->getId() : null;
-        $this->trackMostRecentPublishedMessage($this->publishedMessageTracker, $exchangeName, $id);
+        if ($track) {
+            $id = $lastPublishedNotifications ? $lastPublishedNotifications->getId() : null;
+            $this->trackMostRecentPublishedMessage($this->publishedMessageTracker, $exchangeName, $id);
+        }
+
         return $publishedMessages;
     }
 
     /**
      * @param $mostRecentPublishedId
+     * @param $exchangeName
      * @return mixed
+     * @throws DomainLogicException
      */
-    private function listUnpublished($mostRecentPublishedId)
+    private function listUnpublished($mostRecentPublishedId, $exchangeName)
     {
-        return $this->eventStore->allEventsSince($mostRecentPublishedId);
+        switch ($exchangeName) {
+            case DomainEvent::PUBLISH_NAME:
+                return $this->eventStore->allEventsSince($mostRecentPublishedId);
+                break;
+            default:
+                throw new DomainLogicException(sprintf("No service configured to find last unpublished for %s", $exchangeName));
+        }
     }
 
     /**
@@ -157,7 +171,7 @@ class NotificationService
     {
         $createdAt = Date::cast($notif->getCreatedAt());
         if (!$createdAt) {
-            throw new \LogicException("createdAt field cannot be null and must be of type " . \DateTimeImmutable::class);
+            throw new DomainLogicException("createdAt field cannot be null and must be of type " . \DateTimeImmutable::class);
         }
 
         $messageProducer->send(
